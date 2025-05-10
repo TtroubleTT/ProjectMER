@@ -1,5 +1,6 @@
+global using Logger = LabApi.Features.Console.Logger;
+
 using LabApi.Events.CustomHandlers;
-using LabApi.Features.Console;
 using LabApi.Loader;
 using LabApi.Loader.Features.Plugins;
 using ProjectMER.Configs;
@@ -76,7 +77,7 @@ public class ProjectMER : Plugin<Config>
 
 	public override string Author => "Michal78900";
 
-	public override Version Version => new Version(2025, 5, 2, 1);
+	public override Version Version => new Version(2025, 5, 9, 1);
 
 	public override Version RequiredApiVersion => new Version(1, 0, 0, 0);
 }
