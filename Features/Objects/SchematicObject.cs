@@ -11,6 +11,9 @@ using Object = UnityEngine.Object;
 
 namespace ProjectMER.Features.Objects;
 
+using LabApi.Features.Wrappers;
+using MapGeneration;
+
 public class SchematicObject : MonoBehaviour
 {
 	public SchematicObjectDataList SchematicData { get; private set; }
@@ -24,6 +27,19 @@ public class SchematicObject : MonoBehaviour
 	/// Gets a schematic directory path.
 	/// </summary>
 	public string DirectoryPath { get; private set; }
+	
+	/// <summary>
+	/// Gets or sets forced <see cref="RoomName"/> of the object.
+	/// </summary>
+	public RoomName ForcedRoomName
+	{
+		get => _forcedRoom;
+		set
+		{
+			CurrentRoom = null;
+			_forcedRoom = value;
+		}
+	}
 	
 	/// <summary>
 	/// Gets or sets the global position of the object.
@@ -69,6 +85,59 @@ public class SchematicObject : MonoBehaviour
 			transform.localScale = value;
 		}
 	}
+	
+	/// <summary>
+	/// Gets the current room of the object.
+	/// </summary>
+	public Room? CurrentRoom { get; private set; }
+
+	/// <summary>
+	/// Gets the relative position of the object to the <see cref="Room"/> it is currently in.
+	/// </summary>
+	public Vector3 RelativePosition
+	{
+		get
+		{
+			if (CurrentRoom == null)
+				CurrentRoom = FindRoom();
+
+			return CurrentRoom.Name == RoomName.Outside ? transform.position : CurrentRoom.Transform.InverseTransformPoint(transform.position);
+		}
+	}
+
+	/// <summary>
+	/// Gets the room name of the object.
+	/// </summary>
+	public RoomName RoomName
+	{
+		get
+		{
+			if (CurrentRoom == null)
+				CurrentRoom = FindRoom();
+
+			return CurrentRoom.Name;
+		}
+	}
+
+	/// <summary>
+	/// Finds the room in which object is. This method is more accurate than <see cref="Map.FindParentRoom(GameObject)"/> because it will also check for distance.
+	/// </summary>
+	/// <returns>The found <see cref="Room"/>.</returns>
+	public Room FindRoom()
+	{
+		if (ForcedRoomName != RoomName.Unnamed)
+		{
+			return Room.List.Where(x => x.Name == ForcedRoomName).OrderBy(x => (x.Position - Position).sqrMagnitude).First();
+		}
+
+		if (Room.TryGetRoomAtPosition(Position, out Room? room))
+		{
+			return room;
+		}
+
+		return Room.Get(RoomName.Outside).First();
+	}
+
 
 	public IReadOnlyList<GameObject> AttachedBlocks => _attachedBlocks;
 
@@ -244,4 +313,5 @@ public class SchematicObject : MonoBehaviour
 	private List<NetworkIdentity> _networkIdentities = new();
 	private List<AdminToyBase> _adminToyBases = new();
 	private Dictionary<GameObject, RuntimeAnimatorController> _animators = new();
+	private RoomName _forcedRoom = RoomName.Unnamed;
 }
